@@ -21,9 +21,10 @@ class LoadImageFromHttpURL:
 
     def load_image(self, image_url: str):
         try:
-            response = requests.get(image_url)
+            response = requests.get(image_url, stream=True)
             response.raise_for_status()
-            image = Image.open(io.BytesIO(response.content)).convert("RGB")
+
+            image = Image.open(response.raw).convert("RGB")
 
             image_np = np.array(image).astype(np.float32) / 255.0
             image_tensor = torch.from_numpy(image_np).unsqueeze(0)
@@ -31,4 +32,6 @@ class LoadImageFromHttpURL:
             return (image_tensor,)
         except Exception as e:
             print(f"Failed to load image from URL: {e}")
-            return (torch.zeros(1, 512, 512, 3),)  # fallback black image
+            # Return a black image if loading fails
+            return (torch.zeros(1, 512, 512, 3),)
+
